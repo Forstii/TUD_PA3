@@ -1,3 +1,4 @@
+# created by Adrian Horst
 import datetime
 import os
 
@@ -7,7 +8,9 @@ import project.functions as fn
 
 
 def main():
+    print("test")
     pass
+
 
 
 if __name__ == "__main__":
