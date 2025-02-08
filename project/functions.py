@@ -10,11 +10,17 @@ from plotid.publish import publish
 from plotid.tagplot import tagplot
 
 
-def read_metadata(file: str, path: str, attr_key: str) -> Any | None:
-    pass
+def read_metadata(file: str, dataset_path: str, attr_key: str) -> Any | None:
+    """get attribute from hdf5 file"""
+    with h5.File(file, 'r') as file_opened:
+        dataset = file_opened[dataset_path]
+        if dataset.attrs.get(attr_key) is not None:
+            return dataset.attrs[attr_key]
+        else:
+            print("Attribute not found")
 
 
-def read_data(file: str, path: str) -> NDArray | None:
+def read_data(file: str, dataset_path: str) -> NDArray | None:
     pass
 
 
