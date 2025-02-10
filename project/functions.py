@@ -20,30 +20,70 @@ def read_metadata(file: str, dataset_path: str, attr_key: str) -> Any | None:
             print("Attribute not found")
 
 
-def read_data(file: str, dataset_path: str) -> NDArray | None:
-    pass
+def read_data(file: str, dataset_path: str) -> np.ndarray | None:
+    """Read dataset from HDF5 file and return as numpy array"""
+    with h5.File(file, 'r') as file_opened:
+        if dataset_path in file_opened:
+            dataset = file_opened[dataset_path]
+            if isinstance(dataset, h5.Group):
+                print(f"Path '{dataset_path}' is a group, not a dataset.")
+                return None
+            data = np.array(dataset)
+            return data
+        else:
+            print(f"Dataset '{dataset_path}' not found in file '{file}'")
+            return None
 
 
 def check_equal_length(*arrays: NDArray) -> bool:
-    pass
+    last_element = arrays[0]
+    for i in arrays:
+        if last_element.ndim != i.ndim:
+            return False
+        last_element = i
+    return True
 
 
 def process_time_data(data: NDArray) -> NDArray:
-    pass
-
+    first_timestamp = data[0]
+    return (data - first_timestamp)*1e-9
 
 def remove_negatives(array: NDArray) -> NDArray:
-    pass
-
+    for x,i in enumerate(array):
+        if i < 0:
+            array[x] = np.nan
+    return array
+            
 
 def linear_interpolation(
     time: NDArray, start_time: float, end_time: float, start_y: float, end_y: float
 ) -> NDArray:
-    pass
+    for x,i in enumerate(time):
+        time[x] = start_y + (end_y - start_y) * ((i - start_time) / (end_time - start_time))
+    return time
 
 
 def interpolate_nan_data(time: NDArray, y_data: NDArray) -> NDArray:
-    pass
+    active_gap = False
+    interpolated_data = y_data.copy()
+
+    if np.isnan(y_data[0]) or np.isnan(y_data[-1]):
+        exception = ValueError("First or last value is NaN")
+        raise exception
+    else:
+        for x,i in enumerate(y_data):
+            if np.isnan(i) and active_gap == False:
+                start_index = x-1
+                active_gap = True
+                print("nan detected")
+            if not np.isnan(i) and active_gap == True:
+                end_index = x
+                interpolated_data[start_index:end_index] = linear_interpolation(time[start_index:end_index], time[start_index], time[end_index], y_data[start_index], y_data[end_index])
+                active_gap = False
+        return interpolated_data
+
+
+
 
 
 def filter_data(data: NDArray, window_size: int) -> NDArray:

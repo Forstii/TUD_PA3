@@ -21,11 +21,23 @@ tank_properties = ["mass_tank", "surface_area_tank", "footprint_tank", "heat_tra
 df_data = {}
 
 def main():
+    raw_data = {}
+
     for i in tank_properties:
         print(f"{i} " + str(fn.read_metadata(file_path, compound_path, i)))
-    raw_data = {}
+    
     for i in measured_quantities:
-        raw_data[i] = fn.read_metadata(file_path, compound_path, i)
-    print(raw_data)
+        read_data = fn.read_data(file_path, f"{compound_path}/{i}")
+        raw_data[i] = read_data
+
+    raw_arrays = raw_data.values()
+    if not fn.check_equal_length(*raw_arrays):
+        exception = ValueError("Arrays have different dimensions")
+        raise exception
+    
+    print(fn.process_time_data(raw_data["timestamp"]))
+
+
+    
 if __name__ == "__main__":
     main()
