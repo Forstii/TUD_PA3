@@ -75,7 +75,6 @@ def interpolate_nan_data(time: NDArray, y_data: NDArray) -> NDArray:
             if np.isnan(i) and active_gap == False:
                 start_index = x-1
                 active_gap = True
-                print("nan detected")
             if not np.isnan(i) and active_gap == True:
                 end_index = x
                 interpolated_data[start_index:end_index] = linear_interpolation(time[start_index:end_index], time[start_index], time[end_index], y_data[start_index], y_data[end_index])
@@ -101,7 +100,7 @@ def filter_data(data: NDArray, window_size: int) -> NDArray:
     padded_data = np.pad(array=data, pad_width=pad_width, mode="empty")
     for i in range(pad_width, padded_data.size - pad_width):
         # Implementieren Sie hier den SMA!
-        sma = []
+        sma = padded_data[i-pad_width:i+pad_width+1].mean()
         output.append(sma)
     return np.array(output)
 
