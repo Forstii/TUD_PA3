@@ -19,7 +19,7 @@ def read_metadata(file: str, dataset_path: str, attr_key: str) -> Any | None:
         else:
             print("Attribute not found")
 
-
+read_metadata("/Users/adrianforst/Desktop/PA3/pa-ws2425/project/data/data_GdD_Datensatz_WS2425.h5", "brewing_0001", "T_env")
 def read_data(file: str, dataset_path: str) -> np.ndarray | None:
     """Read dataset from HDF5 file and return as numpy array"""
     with h5.File(file, 'r') as file_opened:
@@ -82,9 +82,6 @@ def interpolate_nan_data(time: NDArray, y_data: NDArray) -> NDArray:
         return interpolated_data
 
 
-
-
-
 def filter_data(data: NDArray, window_size: int) -> NDArray:
     """Filter data using a moving average approach.
 
@@ -105,28 +102,32 @@ def filter_data(data: NDArray, window_size: int) -> NDArray:
     return np.array(output)
 
 
-
 def calc_heater_heat_flux(P_heater: float, eta_heater: float) -> float:
-    pass
-
+    return P_heater*eta_heater
 
 def calc_convective_heat_flow(
     k_tank: float, area_tank: float, t_total: float, t_env: float
 ) -> float:
-    pass
+    return k_tank*area_tank*(t_total-t_env)
 
-
-def calc_mass_flow(
+def calc_mass(
     level_data: NDArray, tank_footprint: float, density: float
 ) -> NDArray:
-    pass
+    """level_data: level data in mm
+    tank_footprint: tank footprint in m^2
+    density: density in kg/m^3"""
+    mass_array = level_data*tank_footprint*density
+    return mass_array
 
 
 def calc_transported_power(
     mass_flow: float, specific_heat_capacity: float, temperature: float
 ) -> float:
-    pass
+    return mass_flow*specific_heat_capacity*temperature
 
+def calc_enthalpy(mass: float, specific_heat_capacity: float, temperature: float
+) -> float:
+    return mass*specific_heat_capacity*temperature
 
 def store_plot_data(
     data: dict[str, NDArray], file_path: str, group_path: str, metadata: dict[str, Any]
