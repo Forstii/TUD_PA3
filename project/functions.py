@@ -19,7 +19,6 @@ def read_metadata(file: str, dataset_path: str, attr_key: str) -> Any | None:
         else:
             print("Attribute not found")
 
-read_metadata("/Users/adrianforst/Desktop/PA3/pa-ws2425/project/data/data_GdD_Datensatz_WS2425.h5", "brewing_0001", "T_env")
 def read_data(file: str, dataset_path: str) -> np.ndarray | None:
     """Read dataset from HDF5 file and return as numpy array"""
     with h5.File(file, 'r') as file_opened:
@@ -94,7 +93,7 @@ def filter_data(data: NDArray, window_size: int) -> NDArray:
     """
     output = []
     pad_width = window_size // 2
-    padded_data = np.pad(array=data, pad_width=pad_width, mode="empty")
+    padded_data = np.pad(array=data, pad_width=pad_width, mode="edge")
     for i in range(pad_width, padded_data.size - pad_width):
         # Implementieren Sie hier den SMA!
         sma = padded_data[i-pad_width:i+pad_width+1].mean()
@@ -105,10 +104,12 @@ def filter_data(data: NDArray, window_size: int) -> NDArray:
 def calc_heater_heat_flux(P_heater: float, eta_heater: float) -> float:
     return P_heater*eta_heater
 
+
 def calc_convective_heat_flow(
-    k_tank: float, area_tank: float, t_total: float, t_env: float
-) -> float:
+    k_tank: float, area_tank: float, t_total: NDArray, t_env: float
+) -> NDArray:
     return k_tank*area_tank*(t_total-t_env)
+
 
 def calc_mass(
     level_data: NDArray, tank_footprint: float, density: float
@@ -116,7 +117,7 @@ def calc_mass(
     """level_data: level data in mm
     tank_footprint: tank footprint in m^2
     density: density in kg/m^3"""
-    mass_array = level_data*tank_footprint*density
+    mass_array = level_data*tank_footprint*density/1000
     return mass_array
 
 
@@ -125,20 +126,28 @@ def calc_transported_power(
 ) -> float:
     return mass_flow*specific_heat_capacity*temperature
 
+
 def calc_enthalpy(mass: float, specific_heat_capacity: float, temperature: float
 ) -> float:
     return mass*specific_heat_capacity*temperature
 
+
 def store_plot_data(
     data: dict[str, NDArray], file_path: str, group_path: str, metadata: dict[str, Any]
 ) -> None:
-    pass
+    pandas_df = pd.DataFrame(data)
+    pandas_df.to_hdf(file_path, key=group_path, mode="w")
+    with pd.HDFStore(file_path) as store:
+        store.get_storer(group_path).attrs.metadata = metadata
 
 
 def read_plot_data(
     file_path: str, group_path: str
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    pass
+    with pd.HDFStore(file_path) as store:
+        stored_metadata = store.get_storer(group_path).attrs.metadata
+        stored_data = store[group_path]
+    return (stored_data, stored_metadata)
 
 
 def plot_data(data: pd.DataFrame, formats: dict[str, str]) -> Figure:
