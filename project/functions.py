@@ -147,18 +147,35 @@ def read_plot_data(
     with pd.HDFStore(file_path) as store:
         stored_metadata = store.get_storer(group_path).attrs.metadata
         stored_data = store[group_path]
-    return (stored_data, stored_metadata)
+    return stored_data, stored_metadata
 
 
-def plot_data(data: pd.DataFrame, formats: dict[str, str]) -> Figure:
-    pass
+def plot_data(data: pd.DataFrame, metadata: dict[str, str]) -> Figure:
+    fig, ax = plt.subplots()
+
+    # Plotten der Daten
+    for column in data.columns[1:]:  # Überspringe die erste Spalte (Zeit)
+        ax.plot(data.iloc[:, 0], data[column], label=column)
+
+    # Beschriften der Achsen
+    ax.set_xlabel(f"{metadata['x_label']} ({metadata['x_unit']})")
+    ax.set_ylabel(f"{metadata['y_label']} ({metadata['y_unit']})")
+
+    # Hinzufügen der Legende
+    ax.legend(title=metadata["legend_title"])
+
+    # Titel des Plots (optional)
+    ax.set_title(metadata["legend_title"])
+
+    plt.show()
+    return fig
+
 
 
 def publish_plot(
     fig: Figure, source_paths: str | list[str], destination_path: str
 ) -> None:
-    pass
-
-
+    tag_plot = tagplot(fig, engine="matplotlib", id_method="time", prefix="“GdD_WS_2425_2808064_“")
+    publish(tag_plot, source_paths, destination_path)
 if __name__ == "__main__":
     pass

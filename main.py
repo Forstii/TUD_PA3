@@ -2,7 +2,7 @@ import datetime
 import os
 import numpy
 import pandas
-import matplotlib
+import matplotlib.pyplot as plt
 import h5py
 import plotid
 import numpy as np
@@ -35,7 +35,7 @@ raw_data = {}
 processed_data = {}
 df_data = {}
 metadata = {
-"legend_title": f"Inner Energy evaluated using SMV window Sizes of {filter_sizes[0]}, {filter_sizes[1]}, {filter_sizes[2]}, {filter_sizes[3]}",
+"legend_title": f"Inner Energy calculated using SMA window Sizes of {filter_sizes[0]}, {filter_sizes[1]}, {filter_sizes[2]}, {filter_sizes[3]}",
 "x_label": "time",
 "x_unit": "s",
 "y_label": "Inner Energy",
@@ -79,10 +79,13 @@ def main():
             energy_value = y * heater_heat_flux - convective_heat_flow[x] * y + mass_array[x]*specific_heat_capacity_beer*processed_data[f"temperature_k_{i}"][x] + energy_tank
             inner_energy.append(energy_value)
         df_data[f"inner_energy_k_{i}"] = np.array(inner_energy)
-    print(df_data)
 
     fn.store_plot_data(df_data, h5_path, group_path, metadata)
+
+    data, df_metadata = fn.read_plot_data(h5_path, group_path)
+    figure = fn.plot_data(data, df_metadata)
+    fn.publish_plot(figure, h5_path, "./plotid")
     
-    
+
 if __name__ == "__main__":
     main()
