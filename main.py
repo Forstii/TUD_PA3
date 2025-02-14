@@ -58,13 +58,18 @@ def main():
         raise exception
     
     df_data["time"] = fn.process_time_data(raw_data["timestamp"])
+    print(df_data["time"])
 
     for x,i in enumerate(filter_sizes):
         processed_data[f"temperature_k_{i}"] = fn.filter_data(raw_data["temperature"], i)
     print(processed_data)
 
+    print(df_data["time"])
+
     raw_data["level"] = fn.remove_negatives(raw_data["level"])
     raw_data["level"] = fn.interpolate_nan_data(df_data["time"], raw_data["level"])
+
+    print(df_data["time"])
 
     energy_tank = fn.calc_enthalpy(mass_tank,specific_heat_capacity_tank, T_env)
     heater_heat_flux = fn.calc_heater_heat_flux(power_heater, efficiency_heater)
@@ -82,9 +87,11 @@ def main():
 
     fn.store_plot_data(df_data, h5_path, group_path, metadata)
 
+
     data, df_metadata = fn.read_plot_data(h5_path, group_path)
     figure = fn.plot_data(data, df_metadata)
-    fn.publish_plot(figure, h5_path, "./plotid")
+    #fn.publish_plot(figure, h5_path, "./plotid")
+    
     
 
 if __name__ == "__main__":

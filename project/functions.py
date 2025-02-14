@@ -57,9 +57,10 @@ def remove_negatives(array: NDArray) -> NDArray:
 def linear_interpolation(
     time: NDArray, start_time: float, end_time: float, start_y: float, end_y: float
 ) -> NDArray:
-    for x,i in enumerate(time):
-        time[x] = start_y + (end_y - start_y) * ((i - start_time) / (end_time - start_time))
-    return time
+    interpolated_data = time.copy()
+    for x,i in enumerate(interpolated_data):
+        interpolated_data[x] = start_y + (end_y - start_y) * ((i - start_time) / (end_time - start_time))
+    return interpolated_data
 
 
 def interpolate_nan_data(time: NDArray, y_data: NDArray) -> NDArray:
@@ -154,6 +155,7 @@ def plot_data(data: pd.DataFrame, metadata: dict[str, str]) -> Figure:
     fig, ax = plt.subplots()
 
     # Plotten der Daten
+    print(data)
     for column in data.columns[1:]:  # Überspringe die erste Spalte (Zeit)
         ax.plot(data.iloc[:, 0], data[column], label=column)
 
