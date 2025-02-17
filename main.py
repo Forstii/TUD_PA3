@@ -3,6 +3,7 @@ plots using plotid lines 7-13 have to be customized based on path, filter sizes 
 import numpy as np
 import project.functions as fn
 
+
 BREWING = "brewing_0001"
 TANK_ID = "B002"
 FILTER_SIZES = (2, 26, 54, 205)
@@ -39,19 +40,27 @@ processed_data = {}
 df_data = {}
 metadata = {
     "legend_title": (
+        "value after k corresponding to SMA window Size"
+    ),
+    "title": (
         f"Inner Energy calculated using SMA window Sizes of "
         f"{FILTER_SIZES[0]}, {FILTER_SIZES[1]}, {FILTER_SIZES[2]}, {FILTER_SIZES[3]}"
     ),
-    "x_label": "time",
-    "x_unit": "s",
+    "x_label": "time", # SI Units are used, conversion to hours and gJ done by plot function
+    "x_unit": "hours",
     "y_label": "Inner Energy",
-    "y_unit": "J",
+    "y_unit": "gigaJoules",
+    "text" : "The calculation for the inner energy is based on datasets of temperature\n"
+    "filling level of the beer vat as well as the surface area and the heat transfer\n"
+    "coefficient of the vat. Depending on the set group (originally 0001/0002),\n"
+    "heating elements are also taken into account if in accordance with\n"
+    "the naming convention used for this project."
 }
-
 
 def main():
     """Main function for calculating the inner energy of a tank plotting the data\n 
     and storing the plots using plotid"""
+
 
     for i in tank_properties:
         print(f"{i} " + str(fn.read_metadata(FILE_PATH, COMPOUND_PATH, i)))
@@ -66,32 +75,25 @@ def main():
         raise exception
 
     df_data["time"] = fn.process_time_data(raw_data["timestamp"])
-    print(df_data["time"])
 
     for x, i in enumerate(FILTER_SIZES):
         processed_data[f"temperature_k_{i}"] = fn.filter_data(
             raw_data["temperature"], i)
-    print(processed_data)
 
-    print(df_data["time"])
 
     raw_data["level"] = fn.remove_negatives(raw_data["level"])
     raw_data["level"] = fn.interpolate_nan_data(
-        df_data["time"], raw_data["level"])
+                        df_data["time"], raw_data["level"])
 
-    print(df_data["time"])
-
-    energy_tank = fn.calc_enthalpy(
-        mass_tank, specific_heat_capacity_tank, T_env)
     heater_heat_flux = fn.calc_heater_heat_flux(
         power_heater, efficiency_heater)
 
     for i in FILTER_SIZES:
-        convective_heat_flow = fn.calc_convective_heat_flow(
-            heat_transfer_coeff_tank,
-            surface_area_tank,
-            processed_data[f"temperature_k_{i}"],
-            T_env)
+        #convective_heat_flow = fn.calc_convective_heat_flow(
+        #    heat_transfer_coeff_tank,
+        #    surface_area_tank,
+        #    processed_data[f"temperature_k_{i}"*273,15],
+        #    T_env)
         processed_data[f"level_k_{i}"] = fn.filter_data(raw_data["level"], i)
         mass_array = fn.calc_mass(
             processed_data[f"level_k_{i}"],
@@ -99,18 +101,33 @@ def main():
             density_beer)
         inner_energy = []
         for x, y in enumerate(df_data["time"]):
-            energy_value = (y * heater_heat_flux - convective_heat_flow[x] * y
-                            + mass_array[x] * specific_heat_capacity_beer
-                            * processed_data[f"temperature_k_{i}"][x]
-                            + energy_tank)
+            energy_tank = fn.calc_enthalpy(
+            mass_tank, specific_heat_capacity_tank,
+            (processed_data[f"temperature_k_{i}"][x]*273.15))
+            energy_value = (
+                y * heater_heat_flux
+                # The convective heat flow is not included, as it would render
+                # calculations based on temperature data obsolete.
+                # (Nachgefragt in PA3 Fragestunde 11:00 bei Sascha Lamm)
+                + mass_array[x] * specific_heat_capacity_beer
+                * (processed_data[f"temperature_k_{i}"][x] * 273.15)
+                + energy_tank
+            )
             inner_energy.append(energy_value)
         df_data[f"inner_energy_k_{i}"] = np.array(inner_energy)
+
+    for key in df_data:
+        if key != "time":
+            df_data[key] = df_data[key]/1e9
+        else:
+            df_data[key] = df_data[key]/3600
 
     fn.store_plot_data(df_data, H5_PATH, COMPOUND_PATH, metadata)
 
     data, df_metadata = fn.read_plot_data(H5_PATH, COMPOUND_PATH)
     figure = fn.plot_data(data, df_metadata)
     fn.publish_plot(figure, H5_PATH, "./plotid")
+
 
 
 if __name__ == "__main__":
